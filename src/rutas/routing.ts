@@ -20,7 +20,7 @@ const timer = () => {
     setTimeout(() => {
         gotTime = false
         console.log("gotTime: ", gotTime)
-    }, 10000);
+    }, 60000);
     console.log("timer started")
 }
 
