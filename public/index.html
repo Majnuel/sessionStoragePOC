@@ -13,9 +13,10 @@
     <link rel="stylesheet" href="./styles/style.css">
 </head>
 
-<body onload="checkForProducts()">
+<body onload="checkForProducts(), checkForLogin()">
     <div class="container">
         <div id="nav">
+            <a id="logoutButtonWrapper" href="http://localhost:7777/api/hastaluego"></a>
             <form id="login" action="">
                 <input id="loginInput" type="text" placeholder="Ingrese su nombre" required>
                 <button type="submit">Log in</button>

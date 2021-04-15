@@ -8,11 +8,11 @@ const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 
 const session = require('express-session')
-// const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser')
 
-//como es un middleware uso USE
+// como es un middleware uso USE
 app.use(express.json())
-// app.use(cookieParser())
+app.use(cookieParser())
 app.use(session({
     secret: 'secret',
     resave: false,

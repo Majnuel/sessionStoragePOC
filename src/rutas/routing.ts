@@ -1,50 +1,90 @@
 import express, { Application, Request, Response } from "express"
+import { Store } from "express-session"
+import { read } from "fs"
 const Product = require(".././classModule")
 const app: Application = express()
 const router = express.Router()
-const session = require('express-session')
-// const cookieParser = require('cookie-parser')
-
-//como es un middleware uso USE
-app.use(express.json())
-// app.use(cookieParser())
-app.use(session({
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: false
-}))
-
-let user: boolean = false
-
+const path = require('path')
 
 export let id: number = 1
 
 export let productos: any[] = []
 
+let login = false
+let gotTime = true
+let name: any = ''
+
+//NECESITO PODER LEER LA REQ.SESSION.LOGIN DESDE EL SCOPE GLOBAL
+const timer = () => {
+    gotTime = true
+    setTimeout(() => {
+        gotTime = false
+        console.log("gotTime: ", gotTime)
+    }, 10000);
+    console.log("timer started")
+}
+
+declare module 'express-session' {
+    interface SessionData {
+        login: boolean;
+        name: string;
+    }
+}
+
+router.post('/login', (req, res) => {
+    timer()
+    if (!gotTime) {
+        res.send("false")
+    } else {
+        name = req.body.name
+        console.log(name)
+        req.session.login = true
+        req.session.name = name
+        console.log("req.session: ", req.sessionID)
+        res.sendStatus(200)
+
+    }
+
+})
+
+router.get('/login', (req, res) => {
+    const payload = {
+        id: req.sessionID,
+        gotTime: gotTime,
+        name: req.session.name
+    }
+    res.send(payload)
+})
+
+router.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (!err) {
+            res.redirect('/api/hastaluego');
+        }
+    })
+})
+
 router.get('/vista', (req, res) => {
     res.render("main", {
         productos: productos, listExists: true
     })
-
 })
-console.log("current working directory of the Node.js process:", process.cwd())
+
+router.get('/hastaluego', (req, res) => {
+    res.sendFile(path.join(__dirname + '../../rutas/hastaLuego.html'))
+})
+
+router.get('/hastaluegoNombre', (req, res) => {
+    res.send(name)
+})
 
 router.get('/test', (req, res) => {
     // res.send('Testing...')
     res.render("test", { test: true })
 })
 
-
-
 router.get('/', (req, res) => {
     res.send('Pagina principal de la API')
-})
-
-router.post('/login', (req, res) => {
-    // const name: any = req.body
-    // console.log(name)
-    // res.status(200).send(name)
-    // console.log(req.session)
 })
 
 router.get('/productos', (req, res) => {
@@ -96,16 +136,20 @@ router.patch('/productos/:id', (req, res) => {
 })
 
 router.post('/productos', (req, res) => {
-    console.log(`post en /productos recibido, body: , ${req.body}`)
-    console.log(req.body)
-    const { title, price, thumbnail } = req.body
-    const newProduct: any = new Product(title, price, thumbnail, id++)
-    productos.push(newProduct.showProduct())
-    //res.json(newProduct)
-    res.sendStatus(201)
-    //res.redirect("http://localhost:7777/index.html")
-
-    //NO PUEDO ENVIAR LAS DOS COSAS "CANNOT SET HEADERS AFTER THEY ARE SENT TO THE CLIENT" GONZA??
+    if (!gotTime) {
+        req.session.destroy(err => {
+            if (!err) {
+                res.send(false)
+            }
+        })
+    } else {
+        console.log(`post en /productos recibido, body: , ${req.body}`)
+        console.log(req.body)
+        const { title, price, thumbnail } = req.body
+        const newProduct: any = new Product(title, price, thumbnail, id++)
+        productos.push(newProduct.showProduct())
+        res.sendStatus(201)
+    }
 })
 
 router.delete('/productos/:id', (req, res) => {

@@ -1,5 +1,4 @@
-// const axios = require("axios")
-
+            "use strict"; 
             const socket = io();
             const form = document.getElementById('form');
             const tableBody = document.getElementById('table-body')
@@ -15,6 +14,39 @@
             const loginForm = document.getElementById('login')
             const loginInput = document.getElementById('loginInput')
             const nav = document.getElementById('nav')
+            const buttonWrapper = document.getElementById('logoutButtonWrapper')
+            const newA = document.createElement('a')
+
+            const loginCleanUp = () => {
+                const buttonToRemove = document.getElementsByClassName('logout-button')
+                console.log(buttonToRemove)
+                console.log('login cleanup')
+                nav.removeChild(document.getElementById('bienvenido'))
+                loginForm.classList.remove('hidden')
+                newA.setAttribute('id', 'logoutButtonWrapper')
+                newA.setAttribute('href', 'http://localhost:7777/api/hastaluego')
+                nav.prepend(newA)
+                nav.removeChild(buttonWrapper)
+                document.getElementById("logoutButtonWrapper").removeChild(document.getElementById('logoutButton'))
+               
+            }
+
+            //LOGOUT BUTTON
+            const logoutButton = (parentNode) => {
+                const button = document.createElement('button')
+                button.innerText = 'logout'
+                button.classList.add('logout-button')
+                button.setAttribute("id", "logoutButton")
+                button.addEventListener('click', () => {
+                    axios.get('/api/logout')
+                    .then((response) => console.log(response.data))
+                    .catch((error) => {console.log("error: ", error)});
+                })
+                parentNode.prepend(button)
+                return
+            }
+
+            
 
             //login form
             loginForm.addEventListener('submit', (event) => {
@@ -24,8 +56,11 @@
                 } else {
                     const greeting = document.createElement('div')
                     greeting.textContent = `Bienvenido ${loginInput.value}`
+                    greeting.setAttribute('id', 'bienvenido')
                     loginForm.classList.add('hidden')
                     nav.prepend(greeting)
+                    logoutButton(buttonWrapper)
+                    logoutButton(newA)  
                     axios.post('/api/login', {
                         name : loginInput.value
                     })
@@ -38,7 +73,7 @@
                 }
             })
 
-
+            //EMAIL FORM
             emailForm.addEventListener("submit", (event) => {
                 event.preventDefault()
                 const chatDiv = document.getElementById('chat');
@@ -67,6 +102,21 @@
                 chatInput.value = '';
                 console.log(payload.normalizedObj)
             })
+
+            //CHECK IF USER IS LOGGED IN
+            const checkForLogin = () => {
+                axios.get('/api/login')
+                .then(response => {
+                    if (response.data.name) {
+                    const greeting = document.createElement('div')
+                    greeting.textContent = `Bienvenido ${response.data.name}`
+                    loginForm.classList.add('hidden')
+                    nav.prepend(greeting)
+                    logoutButton(buttonWrapper)
+                    }
+                })
+                .catch(error => console.log(error));
+            }
 
 
             const checkForProducts = () => {
@@ -110,6 +160,12 @@
                         'thumbnail': thumbnailInput.value
                     })
                         .then(function (response) {
+                            console.log(response.data)
+                            console.log(typeof response.data)
+                            if (response.data === false) {
+                                loginCleanUp()
+
+                            }
                             console.log(response);
                         })
                         .catch(function (error) {
